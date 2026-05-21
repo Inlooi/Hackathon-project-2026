@@ -1,0 +1,29 @@
+# Окружение и секреты — НИКОГДА не коммитить!
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Архивы
+*.zip
+
+# Логи
+*.log
+
+# ⚠️ ВАЖНО: data/univer.db ОСТАЁТСЯ в репе!
+# Это даёт команде сразу доступ ко всем вузам и отзывам.
