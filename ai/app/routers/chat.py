@@ -9,7 +9,6 @@ from app.services import llm_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-
 @router.post("/message", response_model=ChatMessageOut)
 def send_message(payload: ChatMessageIn, db: Session = Depends(get_db)):
     """Отправить сообщение боту. Бот помнит всю историю и профиль."""
