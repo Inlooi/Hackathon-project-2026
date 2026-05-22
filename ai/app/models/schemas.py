@@ -3,8 +3,6 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 
-
-# ---------- User ----------
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -20,7 +18,6 @@ class UserOut(BaseModel):
         from_attributes = True
 
 
-# ---------- Profile ----------
 class ProfileIn(BaseModel):
     ort_score: Optional[int] = None
     gpa: Optional[float] = None
@@ -39,7 +36,6 @@ class ProfileOut(ProfileIn):
         from_attributes = True
 
 
-# ---------- Chat ----------
 class ChatMessageIn(BaseModel):
     user_id: int
     message: str
@@ -60,7 +56,6 @@ class MessageOut(BaseModel):
         from_attributes = True
 
 
-# ---------- Recommendations ----------
 class RecommendationOut(BaseModel):
     specialty_id: int
     specialty_name: str
