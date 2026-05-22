@@ -1,0 +1,36 @@
+# Don't ship local virtual environment
+venv/
+env/
+.venv/
+
+# Don't ship Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Don't ship secrets — they come via environment variables
+.env
+.env.local
+
+# Don't ship version control metadata
+.git/
+.gitignore
+
+# Don't ship IDE settings
+.idea/
+.vscode/
+*.swp
+
+# Don't ship OS junk
+.DS_Store
+Thumbs.db
+
+# Don't ship build artifacts
+*.zip
+*.tar.gz
+*.log
+
+# Don't ship documentation in container (optional)
+README.md
+CHANGELOG.md
