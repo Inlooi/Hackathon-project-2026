@@ -16,7 +16,6 @@ def list_universities(
     type: str | None = None,
     db: Session = Depends(get_db)
 ):
-    """Список всех вузов в базе. Можно фильтровать по городу и типу."""
     q = db.query(University)
     if city:
         q = q.filter(University.city == city)
@@ -150,7 +149,6 @@ def argument_recommendation(user_id: int, specialty_id: int, db: Session = Depen
             "university": uni.name,
         }
 
-    # Собираем отзывы для контекста
     reviews_text = ""
     if uni.reviews:
         reviews_text = "\n".join([
