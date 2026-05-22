@@ -5,7 +5,6 @@ from app.services.chance_calculator import calculate_admission_chance
 
 
 def recommend_for_user(db: Session, user_id: int, top_n: int = 10) -> list[dict]:
-    """Возвращает топ-N специальностей с лучшим шансом для юзера."""
     profile = db.query(UserProfile).filter_by(user_id=user_id).first()
     if not profile:
         return []
@@ -38,8 +37,6 @@ def recommend_for_user(db: Session, user_id: int, top_n: int = 10) -> list[dict]
 
     results.sort(key=lambda r: r["chance_percent"], reverse=True)
     top = results[:top_n]
-
-    # Сохраняем последние рекомендации в БД (для истории)
     db.query(Recommendation).filter_by(user_id=user_id).delete()
     for r in top:
         db.add(Recommendation(
