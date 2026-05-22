@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models.models import User, UserProfile
 from app.models.schemas import ProfileIn, ProfileOut
 
+
 router = APIRouter(prefix="/users", tags=["users"])
 SECRET_KEY = "замени_на_32_символа_случайной_строки"
 ALGORITHM = "HS256"
