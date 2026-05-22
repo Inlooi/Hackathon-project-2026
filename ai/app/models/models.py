@@ -47,13 +47,11 @@ class University(Base):
     city = Column(String(100))
     website = Column(String(300))
     description = Column(Text)
-
-    # Новые поля для расширенной версии
-    founded_year = Column(Integer)               # год основания
-    student_count = Column(Integer)              # сколько студентов
-    rating = Column(Float)                       # средний рейтинг по отзывам (0-5)
-    parsed_at = Column(DateTime)                 # когда последний раз парсили
-    parse_status = Column(String(30))            # "ok", "partial", "failed"
+    founded_year = Column(Integer)               
+    student_count = Column(Integer)              
+    rating = Column(Float)                       
+    parsed_at = Column(DateTime)                 
+    parse_status = Column(String(30))            
 
     specialties = relationship("Specialty", back_populates="university", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="university", cascade="all, delete-orphan")
@@ -71,7 +69,7 @@ class Specialty(Base):
     tuition_kgs = Column(Integer)
     budget_seats = Column(Integer, default=0)
     duration_years = Column(Integer, default=4)
-    language_of_instruction = Column(String(100))  # русский, английский, кыргызский, турецкий
+    language_of_instruction = Column(String(100))  
 
     university = relationship("University", back_populates="specialties")
 
@@ -82,14 +80,14 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     university_id = Column(Integer, ForeignKey("universities.id"), nullable=False, index=True)
 
-    author = Column(String(200))                   # имя/ник автора (если есть)
-    rating = Column(Float)                         # оценка 1-5
-    content = Column(Text, nullable=False)         # текст отзыва
-    pros = Column(Text)                            # плюсы (если отдельно)
-    cons = Column(Text)                            # минусы (если отдельно)
-    sentiment = Column(String(20))                 # "positive", "neutral", "negative" (от AI)
-    source = Column(String(300))                   # откуда отзыв (URL или название платформы)
-    posted_at = Column(DateTime)                   # дата отзыва (если есть)
+    author = Column(String(200))                   
+    rating = Column(Float)                         
+    content = Column(Text, nullable=False)         
+    pros = Column(Text)                            
+    cons = Column(Text)                            
+    sentiment = Column(String(20))                 
+    source = Column(String(300))                   
+    posted_at = Column(DateTime)                   
     created_at = Column(DateTime, default=datetime.utcnow)
 
     university = relationship("University", back_populates="reviews")
@@ -121,7 +119,7 @@ class ParseLog(Base):
     __tablename__ = "parse_logs"
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String(500), nullable=False)
-    status = Column(String(30))                   # "success", "failed", "partial"
+    status = Column(String(30))                   
     error = Column(Text)
     specialties_found = Column(Integer, default=0)
     reviews_found = Column(Integer, default=0)
