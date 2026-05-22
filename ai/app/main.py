@@ -43,6 +43,7 @@ def root():
     }
 
 
+
 app.include_router(users.router)
 app.include_router(chat.router)
 app.include_router(universities.router)
