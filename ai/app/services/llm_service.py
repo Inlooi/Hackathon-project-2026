@@ -32,13 +32,10 @@ def get_client() -> Groq | None:
     return _client
 
 
-# Llama 3.3 70B — лучшее качество среди бесплатных моделей Groq, отлично понимает русский
 MODEL_NAME = "llama-3.3-70b-versatile"
-
-# Лёгкая модель для парсинга (быстрее, дешевле по токенам — а нам нужно много запросов)
 PARSER_MODEL = "llama-3.1-8b-instant"
 
-HISTORY_LIMIT = 20                   # сколько последних сообщений передаём как контекст
+HISTORY_LIMIT = 20                  
 MAX_TOKENS_CHAT = 1024
 MAX_TOKENS_PARSER = 4096
 
@@ -102,7 +99,6 @@ def _load_history(db: Session, user_id: int) -> list[dict]:
               .limit(HISTORY_LIMIT)
               .all())
     msgs.reverse()
-    # Groq использует "user" и "assistant" — наши роли уже совпадают
     history = []
     for m in msgs:
         history.append({"role": m.role, "content": m.content})
@@ -114,7 +110,6 @@ def send_message(db: Session, user_id: int, user_message: str) -> tuple[str, int
     Возвращает (ответ_ассистента, id_сохранённого_сообщения_ассистента)."""
 
     if not _client:
-        # graceful fallback если ключа нет
         reply = ("[Тестовый режим — GROQ_API_KEY не задан] "
                  "Привет! Расскажи о своих оценках и интересах, и я подберу вузы.")
         db.add(Message(user_id=user_id, role="user", content=user_message))
@@ -129,8 +124,6 @@ def send_message(db: Session, user_id: int, user_message: str) -> tuple[str, int
         profile=_build_profile_text(profile),
         universities=_build_universities_text(db),
     )
-
-    # Собираем сообщения для Groq: system + история + новое сообщение
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(_load_history(db, user_id))
     messages.append({"role": "user", "content": user_message})
@@ -146,7 +139,6 @@ def send_message(db: Session, user_id: int, user_message: str) -> tuple[str, int
     except Exception as e:
         reply = f"Извини, произошла ошибка при обращении к AI. Попробуй ещё раз. ({type(e).__name__})"
 
-    # Сохраняем оба сообщения в БД — это и есть память
     db.add(Message(user_id=user_id, role="user", content=user_message))
     assistant_msg = Message(user_id=user_id, role="assistant", content=reply)
     db.add(assistant_msg)
