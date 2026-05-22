@@ -174,6 +174,7 @@ SEED_DATA = [
 ]
 
 
+
 def seed_database():
     init_db()
     db = SessionLocal()
