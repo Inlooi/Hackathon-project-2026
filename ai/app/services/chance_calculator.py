@@ -8,8 +8,6 @@
 import math
 from typing import Optional
 
-
-# Карта синонимов: что бы ни написал пользователь — приводим к канону из БД
 FIELD_SYNONYMS = {
     "it": "IT", "айти": "IT", "ит": "IT", "программирование": "IT",
     "информационные технологии": "IT", "computer science": "IT",
@@ -44,7 +42,6 @@ FIELD_SYNONYMS = {
 
 
 def normalize_field(field: Optional[str]) -> Optional[str]:
-    """Приводит произвольный ввод пользователя к канону из БД."""
     if not field:
         return None
     key = field.strip().lower()
