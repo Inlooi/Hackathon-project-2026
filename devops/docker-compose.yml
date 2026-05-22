@@ -1,0 +1,95 @@
+# Master Docker Compose for Hackathon Project 2026
+# Brings up the entire stack: AI service + Backend + Database
+#
+# USAGE:
+#   From the repository root:
+#     docker compose -f devops/docker-compose.yml up
+#     docker compose -f devops/docker-compose.yml up -d           # background
+#     docker compose -f devops/docker-compose.yml logs -f         # follow logs
+#     docker compose -f devops/docker-compose.yml down            # stop all
+#
+# SERVICES:
+#   - ai       : FastAPI + Groq Llama 3.3 70B chatbot     (http://localhost:8000)
+#   - backend  : main business logic API                   (http://localhost:8001)
+#   - postgres : production database                       (port 5432)
+#
+# REQUIREMENTS:
+#   - Docker Desktop installed
+#   - .env files in ai/ and backend/ with API keys
+
+services:
+  # ============================================================
+  # AI SERVICE — chatbot, recommendations, parser
+  # ============================================================
+  ai:
+    build:
+      context: ../ai
+      dockerfile: Dockerfile
+    container_name: hackathon_ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../ai/data:/app/data
+    env_file:
+      - ../ai/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - hackathon_net
+
+  # ============================================================
+  # BACKEND SERVICE — main API for frontend
+  # NOTE: uncomment when backend team adds their Dockerfile
+  # ============================================================
+  # backend:
+  #   build:
+  #     context: ../backend
+  #     dockerfile: Dockerfile
+  #   container_name: hackathon_backend
+  #   ports:
+  #     - "8001:8001"
+  #   env_file:
+  #     - ../backend/.env
+  #   depends_on:
+  #     - ai
+  #     - postgres
+  #   restart: unless-stopped
+  #   networks:
+  #     - hackathon_net
+
+  # ============================================================
+  # POSTGRES — production database (optional, AI uses SQLite by default)
+  # ============================================================
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: hackathon_db
+  #   environment:
+  #     POSTGRES_USER: hackathon
+  #     POSTGRES_PASSWORD: hackathon_secret
+  #     POSTGRES_DB: hackathon
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+  #   networks:
+  #     - hackathon_net
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U hackathon"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+# ============================================================
+# Networks — services talk to each other by name
+# ============================================================
+networks:
+  hackathon_net:
+    driver: bridge
+
+# ============================================================
+# Volumes — persistent data
+# ============================================================
+# volumes:
+#   postgres_data:
