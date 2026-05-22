@@ -46,7 +46,6 @@ def main():
     else:
         universities = universities[args.start_from:]
 
-    # Получаем список уже спарсенных вузов
     if args.skip_existing:
         db = SessionLocal()
         existing_names = {u.name for u in db.query(University).filter(University.parse_status == "ok").all()}
@@ -97,7 +96,6 @@ def main():
             print(f"   ❌❌ Критическая ошибка: {type(e).__name__}: {e}")
             failed += 1
 
-        # Задержка для соблюдения лимита 30 запросов/минуту
         if i < total:
             time.sleep(args.delay)
 
