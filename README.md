@@ -129,7 +129,7 @@ docker compose -f devops/docker-compose.yml up --build
 
 ### 4. Open in browser
 
-- 🌐 **Frontend**: [https://your-frontend.vercel.app]((https://abi2kg.vercel.app/))
+- 🌐 **Frontend**: (https://abi2kg.vercel.app/)
 - 🤖 **AI API Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - 🔧 **Backend API**: [http://localhost:8001/docs](http://localhost:8001/docs)
 
@@ -193,18 +193,11 @@ Built on **Groq Llama 3.3 70B** (free tier, 14,400 requests per day, response in
 ### 2. RAG over university database
 Real-time retrieval of relevant universities and specialties from the local database, embedded as structured context into the LLM prompt. This **eliminates hallucinations** — the bot can only answer based on actual indexed data.
 
-### 3. Sigmoid admission chance model
-Hybrid scoring function combining:
-- **70%** sigmoid of (user_ORT − passing_score) / 15
-- **15%** GPA factor (normalized to 5.0)
-- **15%** budget fit factor (full / grant possible / out of reach)
-- **±15%** field alignment multiplier with normalized synonyms (e.g. *"айти"* → *"IT"*)
-
-### 4. AI-argumented recommendations
+### 3. AI-argumented recommendations
 For any recommended specialty, the system retrieves the user profile, specialty details and indexed student reviews, then asks the LLM to produce a structured argument with citations: *why this fits / risks to consider / actionable advice*.
 
-### 5. Universal LLM parser
-Instead of writing 60 custom parsers, a single LLM-powered extractor reads each university's HTML and returns structured JSON (description, faculties, specialties, tuition, passing scores). Handles rate limits gracefully with progressive backoff retry, falls back to SSL-verify-off mode for sites with broken certificates.
+### 4. Universal LLM parser
+Instead of writing 61 custom parsers, a single LLM-powered extractor reads each university's HTML and returns structured SQLITE Tables (description, faculties, specialties, tuition, passing scores). Handles rate limits gracefully with progressive backoff retry, falls back to SSL-verify-off mode for sites with broken certificates.
 
 ### Database schema
 
@@ -239,7 +232,7 @@ parse_logs         (parser status and errors)
 | Frontend     | React, TypeScript, Tailwind CSS, deployed on Vercel     |
 | AI Service   | FastAPI, SQLAlchemy, Groq SDK (Llama 3.3 70B + 3.1 8B)  |
 | Backend      | FastAPI, business logic for user-facing operations      |
-| Database     | SQLite (dev) / PostgreSQL (prod), via SQLAlchemy        |
+| Database     | SQLite (dev), via SQLAlchemy        |
 | Parsing      | BeautifulSoup4 + lxml + Groq for structured extraction  |
 | DevOps       | Docker, Docker Compose, Railway (AI hosting), Vercel    |
 
@@ -263,9 +256,7 @@ Recommended demo scenario (3 minutes):
    - Bot suggests 3 concrete universities from the database based on the profile
 4. **Follow-up question** *"Which one is in English?"*
    - Bot remembers the previous suggestions — proves memory
-5. **Open the Recommendations page** — see top-10 specialties with chance percentages
-6. **Click "Why this?"** — AI argument with quotes from real student reviews
-7. **Open the Dashboard** — aggregated statistics across the platform
+5. **Open the Dashboard** — aggregated statistics across the platform
 
 ---
 
@@ -314,6 +305,5 @@ This project is for educational and hackathon purposes.
 ## 🙏 Acknowledgments
 
 - **Groq** — free, fast LLM inference
-- **Meta AI** — Llama 3.3 70B and Llama 3.1 8B models
 - **Ministry of Education of the Kyrgyz Republic** — public university data
 - All Kyrgyzstani universities whose public information made this project possible
