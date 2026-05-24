@@ -1,4 +1,4 @@
-// src/app/pages/Home.tsx
+// US-03: расширенные фильтры  US-09: статистика на главной
 import { useState, useMemo, useEffect } from "react";
 import {
   Search,
@@ -10,35 +10,51 @@ import {
   Trophy,
   ArrowRight,
   Loader2,
+  BookOpen,
+  Star,
+  Users2,
 } from "lucide-react";
 import {
   universityService,
   type UniversityListItem,
+  type PlatformStats,
 } from "../services/authService";
 import { UniversityCard } from "../components/UniversityCard";
 import { Link } from "react-router";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSaved } from "../contexts/SavedContext";
+import { useAuthContext } from "../contexts/AuthContext";
 
 export function Home() {
   const { t } = useLanguage();
   const { isSaved, toggle } = useSaved();
+  const { user } = useAuthContext();
 
   const [universities, setUniversities] = useState<UniversityListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // US-09: platform stats
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+
+  // US-03: расширенные фильтры
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFields, setActiveFields] = useState<string[]>([]);
+  const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeLocations, setActiveLocations] = useState<string[]>([]);
-  const [ortScoreFilter, setOrtScoreFilter] = useState<number | "">("");
+  const [maxBudget, setMaxBudget] = useState<number>(200000);
+  const [ortThreshold, setOrtThreshold] = useState<number | "">("");
+  const [languageFilter, setLanguageFilter] = useState<string>("");
+  const [fieldFilter, setFieldFilter] = useState<string>("");
 
   useEffect(() => {
     setLoading(true);
-    universityService
-      .getAll()
-      .then((data) => {
-        setUniversities(data);
+    Promise.all([
+      universityService.getAll(),
+      universityService.getStats().catch(() => null),
+    ])
+      .then(([unis, s]) => {
+        setUniversities(unis);
+        if (s) setStats(s);
         setFetchError(null);
       })
       .catch((err) => setFetchError(err.message))
@@ -46,32 +62,30 @@ export function Home() {
   }, []);
 
   const allLocations = useMemo(() => {
-    const locs = new Set<string>();
+    const s = new Set<string>();
     universities.forEach((u) => {
-      if (u.city) locs.add(u.city);
+      if (u.city) s.add(u.city);
     });
-    return Array.from(locs).sort();
+    return Array.from(s).sort();
   }, [universities]);
 
   const allTypes = useMemo(() => {
-    const types = new Set<string>();
+    const s = new Set<string>();
     universities.forEach((u) => {
-      if (u.type) types.add(u.type);
+      if (u.type) s.add(u.type);
     });
-    return Array.from(types).sort();
+    return Array.from(s).sort();
   }, [universities]);
 
-  const toggleField = (f: string) =>
-    setActiveFields((prev) =>
-      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f],
+  const toggleType = (v: string) =>
+    setActiveTypes((p) =>
+      p.includes(v) ? p.filter((x) => x !== v) : [...p, v],
+    );
+  const toggleLocation = (v: string) =>
+    setActiveLocations((p) =>
+      p.includes(v) ? p.filter((x) => x !== v) : [...p, v],
     );
 
-  const toggleLocation = (l: string) =>
-    setActiveLocations((prev) =>
-      prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l],
-    );
-
-  // onToggleSave принимает (id: number, e: MouseEvent)
   const handleToggleSave = (id: number, e: React.MouseEvent) => {
     e.preventDefault();
     toggle(id);
@@ -79,20 +93,35 @@ export function Home() {
 
   const clearAllFilters = () => {
     setSearchQuery("");
-    setActiveFields([]);
+    setActiveTypes([]);
     setActiveLocations([]);
-    setOrtScoreFilter("");
+    setMaxBudget(200000);
+    setOrtThreshold("");
+    setLanguageFilter("");
+    setFieldFilter("");
   };
 
+  const hasActiveFilters =
+    activeTypes.length > 0 ||
+    activeLocations.length > 0 ||
+    searchQuery ||
+    languageFilter ||
+    fieldFilter ||
+    ortThreshold !== "";
+
   const filteredUniversities = universities.filter((uni) => {
-    const matchesSearch =
-      uni.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (uni.city ?? "").toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType =
-      activeFields.length === 0 || activeFields.includes(uni.type);
-    const matchesLocation =
-      activeLocations.length === 0 || activeLocations.includes(uni.city);
-    return matchesSearch && matchesType && matchesLocation;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (
+        !uni.name.toLowerCase().includes(q) &&
+        !(uni.city ?? "").toLowerCase().includes(q)
+      )
+        return false;
+    }
+    if (activeTypes.length > 0 && !activeTypes.includes(uni.type)) return false;
+    if (activeLocations.length > 0 && !activeLocations.includes(uni.city))
+      return false;
+    return true;
   });
 
   const topRanked = useMemo(
@@ -105,7 +134,7 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Hero */}
+      {/* ── Hero ── */}
       <div className="bg-indigo-900 py-20 px-4 sm:px-6 lg:px-8 text-center">
         <div className="container mx-auto max-w-4xl">
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -134,8 +163,63 @@ export function Home() {
         </div>
       </div>
 
+      {/* ── US-09: Statistics block ── */}
+      {stats && (
+        <div className="bg-white border-b border-gray-100">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {[
+                {
+                  icon: GraduationCap,
+                  value: stats.total_universities,
+                  label: "Universities",
+                  color: "text-indigo-600",
+                  bg: "bg-indigo-50",
+                },
+                {
+                  icon: BookOpen,
+                  value: stats.total_specialties,
+                  label: "Specialties",
+                  color: "text-purple-600",
+                  bg: "bg-purple-50",
+                },
+                {
+                  icon: Star,
+                  value: stats.total_reviews,
+                  label: "Reviews",
+                  color: "text-yellow-500",
+                  bg: "bg-yellow-50",
+                },
+                {
+                  icon: Users2,
+                  value: Object.keys(stats.by_city).length,
+                  label: "Cities",
+                  color: "text-green-600",
+                  bg: "bg-green-50",
+                },
+              ].map(({ icon: Icon, value, label, color, bg }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50"
+                >
+                  <div className={`p-3 rounded-xl ${bg}`}>
+                    <Icon className={color} size={22} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-gray-900">
+                      {value.toLocaleString()}+
+                    </div>
+                    <div className="text-sm text-gray-500">{label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        {/* Топ-3 */}
+        {/* Top-3 */}
         {!loading && topRanked.length > 0 && (
           <div className="mb-12">
             <div className="flex items-center gap-2 mb-4">
@@ -173,7 +257,7 @@ export function Home() {
         )}
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters */}
+          {/* ── US-03: Filter sidebar ── */}
           <div className="w-full lg:w-72 shrink-0">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
@@ -181,9 +265,7 @@ export function Home() {
                   <SlidersHorizontal size={20} className="text-indigo-600" />
                   <h3>{t("filters")}</h3>
                 </div>
-                {(activeFields.length > 0 ||
-                  activeLocations.length > 0 ||
-                  searchQuery) && (
+                {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
                     className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
@@ -192,33 +274,84 @@ export function Home() {
                   </button>
                 )}
               </div>
-              <div className="space-y-8">
+
+              <div className="space-y-7">
+                {/* ORT threshold */}
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Target size={16} className="text-gray-400" />{" "}
-                    {t("myOrtScore")}
+                    <Target size={15} className="text-gray-400" /> Порог ОРТ
                   </h4>
                   <input
                     type="number"
                     min="0"
                     max="245"
-                    placeholder="Out of 245"
+                    placeholder="Мой балл ОРТ"
                     className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    value={ortScoreFilter}
+                    value={ortThreshold}
                     onChange={(e) => {
-                      let val = e.target.value;
-                      if (val !== "" && parseInt(val) > 245) val = "245";
-                      setOrtScoreFilter(val === "" ? "" : parseInt(val));
+                      let v = e.target.value;
+                      if (v && parseInt(v) > 245) v = "245";
+                      setOrtThreshold(v === "" ? "" : parseInt(v));
                     }}
                   />
+                  {ortThreshold !== "" && (
+                    <p className="mt-1 text-xs text-gray-400">
+                      Показаны вузы с проходным ≤ {ortThreshold}
+                    </p>
+                  )}
                 </div>
+
                 <hr className="border-gray-100" />
+
+                {/* Max budget */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">
+                    Макс. бюджет (сом/год)
+                  </h4>
+                  <input
+                    type="range"
+                    min="10000"
+                    max="200000"
+                    step="5000"
+                    value={maxBudget}
+                    onChange={(e) => setMaxBudget(parseInt(e.target.value))}
+                    className="w-full accent-indigo-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>10 000</span>
+                    <span className="font-semibold text-indigo-600">
+                      {maxBudget.toLocaleString()} сом
+                    </span>
+                    <span>200 000</span>
+                  </div>
+                </div>
+
+                <hr className="border-gray-100" />
+
+                {/* Specialty/field filter */}
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <MapPin size={16} className="text-gray-400" />{" "}
+                    <BookOpen size={15} className="text-gray-400" />{" "}
+                    Специальность
+                  </h4>
+                  <input
+                    type="text"
+                    placeholder="Поиск по направлению..."
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    value={fieldFilter}
+                    onChange={(e) => setFieldFilter(e.target.value)}
+                  />
+                </div>
+
+                <hr className="border-gray-100" />
+
+                {/* City */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <MapPin size={15} className="text-gray-400" />{" "}
                     {t("locations")}
                   </h4>
-                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-2">
+                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
                     {allLocations.map((loc) => (
                       <label
                         key={loc}
@@ -237,12 +370,16 @@ export function Home() {
                     ))}
                   </div>
                 </div>
+
                 <hr className="border-gray-100" />
+
+                {/* Type */}
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <GraduationCap size={16} className="text-gray-400" /> Type
+                    <GraduationCap size={15} className="text-gray-400" /> Тип
+                    вуза
                   </h4>
-                  <div className="space-y-2.5 max-h-48 overflow-y-auto pr-2">
+                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
                     {allTypes.map((type) => (
                       <label
                         key={type}
@@ -251,8 +388,8 @@ export function Home() {
                         <input
                           type="checkbox"
                           className="h-4 w-4 rounded border-gray-300 text-indigo-600"
-                          checked={activeFields.includes(type)}
-                          onChange={() => toggleField(type)}
+                          checked={activeTypes.includes(type)}
+                          onChange={() => toggleType(type)}
                         />
                         <span className="text-sm text-gray-700">{type}</span>
                       </label>
@@ -265,10 +402,10 @@ export function Home() {
 
           {/* Results */}
           <div className="flex-1">
-            <div className="mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">
                 {loading ? (
-                  <span className="text-gray-400">Loading...</span>
+                  <span className="text-gray-400">Загрузка...</span>
                 ) : (
                   <>
                     {filteredUniversities.length}{" "}
@@ -289,7 +426,7 @@ export function Home() {
             {!loading && fetchError && (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
                 <p className="text-red-600 font-medium">
-                  Failed to load universities
+                  Не удалось загрузить вузы
                 </p>
                 <p className="text-sm text-red-400 mt-1">{fetchError}</p>
               </div>
@@ -301,11 +438,11 @@ export function Home() {
                   <UniversityCard
                     key={uni.id}
                     university={uni}
-                    isSaved={isSaved(uni.id)} // ← из контекста
-                    onToggleSave={handleToggleSave} // ← сохраняет в localStorage
+                    isSaved={isSaved(uni.id)}
+                    onToggleSave={handleToggleSave}
                     userOrtScore={
-                      typeof ortScoreFilter === "number"
-                        ? ortScoreFilter
+                      typeof ortThreshold === "number"
+                        ? ortThreshold
                         : undefined
                     }
                   />

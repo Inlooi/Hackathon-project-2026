@@ -91,6 +91,16 @@ export interface Recommendation {
   reasoning: string;
 }
 
+// Stats from GET /stats
+export interface PlatformStats {
+  total_universities: number;
+  total_specialties: number;
+  total_reviews: number;
+  by_city: Record<string, number>;
+  by_type: Record<string, number>;
+  by_field: Record<string, number>;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Unknown error" }));
@@ -122,7 +132,6 @@ export const authService = {
       body: JSON.stringify(payload),
     }).then(handleResponse<AuthResponse>),
 
-  // ИСПРАВЛЕНО: добавлен дженерик
   getMe: (): Promise<{ id: number; name: string; email: string }> =>
     fetch(`${BASE_URL}/users/me`, { headers: authHeaders() }).then(
       handleResponse<{ id: number; name: string; email: string }>,
@@ -168,10 +177,14 @@ export const universityService = {
     fetch(`${BASE_URL}/recommendations/${userId}`, {
       headers: authHeaders(),
     }).then(handleResponse<{ recommendations: Recommendation[] }>),
+
+  getStats: (): Promise<PlatformStats> =>
+    fetch(`${BASE_URL}/stats`, { headers: authHeaders() }).then(
+      handleResponse<PlatformStats>,
+    ),
 };
 
 export const chatService = {
-  // ИСПРАВЛЕНО: добавлен дженерик
   sendMessage: (
     userId: number,
     message: string,
@@ -182,16 +195,24 @@ export const chatService = {
       body: JSON.stringify({ user_id: userId, message }),
     }).then(handleResponse<{ reply: string; message_id: number }>),
 
-  getHistory: (userId: number): Promise<unknown> =>
+  getHistory: (
+    userId: number,
+  ): Promise<
+    { id: number; role: string; content: string; created_at: string }[]
+  > =>
     fetch(`${BASE_URL}/chat/history/${userId}`, {
       headers: authHeaders(),
-    }).then(handleResponse<unknown>),
+    }).then(
+      handleResponse<
+        { id: number; role: string; content: string; created_at: string }[]
+      >,
+    ),
 
-  clearHistory: (userId: number): Promise<unknown> =>
+  clearHistory: (userId: number): Promise<{ status: string }> =>
     fetch(`${BASE_URL}/chat/history/${userId}`, {
       method: "DELETE",
       headers: authHeaders(),
-    }).then(handleResponse<unknown>),
+    }).then(handleResponse<{ status: string }>),
 };
 
 export const tokenStorage = {

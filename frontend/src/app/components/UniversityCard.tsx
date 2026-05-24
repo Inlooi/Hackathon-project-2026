@@ -1,24 +1,31 @@
+// US-02: Match % badge + breakdown icons
 import { Link } from "react-router";
 import { Star, MapPin, GraduationCap, BookOpen } from "lucide-react";
 import type { UniversityListItem } from "../services/authService";
+
+interface MatchBreakdown {
+  ort: boolean;
+  budget: boolean;
+  location: boolean;
+  specialty: boolean;
+}
 
 interface Props {
   university: UniversityListItem;
   isSaved?: boolean;
   onToggleSave?: (id: number, e: React.MouseEvent) => void;
   userOrtScore?: number;
+  matchPercent?: number;
+  matchBreakdown?: MatchBreakdown;
 }
 
 export function UniversityCard({
   university,
   isSaved = false,
   onToggleSave,
-  userOrtScore,
+  matchPercent,
+  matchBreakdown,
 }: Props) {
-  const tuitionFormatted = university.student_count
-    ? `${university.student_count.toLocaleString()} students`
-    : null;
-
   const typeColor: Record<string, string> = {
     государственный: "bg-blue-50 text-blue-700",
     частный: "bg-purple-50 text-purple-700",
@@ -27,6 +34,15 @@ export function UniversityCard({
   const badgeClass =
     typeColor[university.type?.toLowerCase() ?? ""] ??
     "bg-gray-100 text-gray-600";
+
+  // Match % color
+  const matchColor = !matchPercent
+    ? ""
+    : matchPercent >= 80
+      ? "text-green-600 bg-green-50 border-green-200"
+      : matchPercent >= 50
+        ? "text-yellow-600 bg-yellow-50 border-yellow-200"
+        : "text-red-500 bg-red-50 border-red-200";
 
   return (
     <Link
@@ -43,25 +59,36 @@ export function UniversityCard({
             {university.name}
           </h3>
 
-          {/* Save button */}
-          {onToggleSave && (
-            <button
-              onClick={(e) => onToggleSave(university.id, e)}
-              className="shrink-0 rounded-full p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill={isSaved ? "currentColor" : "none"}
-                stroke="currentColor"
-                strokeWidth="2"
-                className={isSaved ? "text-red-500" : ""}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* US-02: Match % badge */}
+            {matchPercent !== undefined && (
+              <span
+                className={`text-xs font-bold px-2 py-1 rounded-full border ${matchColor}`}
               >
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
-            </button>
-          )}
+                {matchPercent}%
+              </span>
+            )}
+
+            {/* Save button */}
+            {onToggleSave && (
+              <button
+                onClick={(e) => onToggleSave(university.id, e)}
+                className="rounded-full p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill={isSaved ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={isSaved ? "text-red-500" : ""}
+                >
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* City */}
@@ -73,10 +100,39 @@ export function UniversityCard({
         {/* Type badge */}
         {university.type && (
           <span
-            className={`self-start text-xs font-semibold px-2.5 py-1 rounded-full mb-4 ${badgeClass}`}
+            className={`self-start text-xs font-semibold px-2.5 py-1 rounded-full mb-3 ${badgeClass}`}
           >
             {university.type}
           </span>
+        )}
+
+        {/* US-02: Match breakdown icons */}
+        {matchBreakdown && (
+          <div className="flex items-center gap-3 mb-3 p-2.5 rounded-xl bg-gray-50 border border-gray-100">
+            <span className="text-xs text-gray-400 font-medium">Match:</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[
+                { key: "ort", label: "ОРТ" },
+                { key: "budget", label: "Бюджет" },
+                { key: "location", label: "Город" },
+                { key: "specialty", label: "Спец." },
+              ].map(({ key, label }) => {
+                const ok = matchBreakdown[key as keyof MatchBreakdown];
+                return (
+                  <span
+                    key={key}
+                    className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-md ${
+                      ok
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-50 text-red-400"
+                    }`}
+                  >
+                    {ok ? "✓" : "✗"} {label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Stats */}
@@ -102,6 +158,7 @@ export function UniversityCard({
         {/* Footer */}
         <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-medium text-gray-500">
           <div className="flex items-center gap-1">
+            {/* US-09: Rating badge */}
             <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
             <span className="text-gray-900 font-bold">
               {university.rating?.toFixed(1) ?? "—"}
