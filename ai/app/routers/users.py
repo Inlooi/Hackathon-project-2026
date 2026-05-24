@@ -1,4 +1,3 @@
-"""Эндпоинты для пользователей, анкет и аутентификации."""
 import hashlib, hmac, secrets
 from datetime import datetime, timedelta, timezone
 import jwt
