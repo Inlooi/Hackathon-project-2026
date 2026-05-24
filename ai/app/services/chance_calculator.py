@@ -1,10 +1,3 @@
-"""Расчёт шанса поступления абитуриента на специальность.
-
-ВЕРСИЯ 2: исправлены проблемы первой версии:
-- target_field теперь нормализуется (Айти = IT = it)
-- профильные специальности получают сильный приоритет
-- непрофильные направления резко понижаются в рекомендациях
-"""
 import math
 from typing import Optional
 
@@ -63,9 +56,6 @@ def calculate_admission_chance(
     budget_seats: int,
     specialty_field: Optional[str],
 ) -> tuple[float, str]:
-    """
-    Возвращает (процент_шанса, человекочитаемое_объяснение).
-    """
     reasons = []
     user_field = normalize_field(target_field)
     sp_field = (specialty_field or "").strip()
