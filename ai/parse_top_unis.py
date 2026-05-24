@@ -1,18 +1,3 @@
-"""Углублённый парсер топ-вузов Кыргызстана.
-
-КОМАНДЫ:
-    python parse_top_unis.py                       # все 12 топовых
-    python parse_top_unis.py --only auca           # один вуз
-    python parse_top_unis.py --limit 3             # первые 3
-    python parse_top_unis.py --retry-failed        # 🔥 перепарсить вузы с малым кол-вом спецов
-    python parse_top_unis.py --manual-fill         # 🔥 залить ручные данные для известных вузов
-
-УЛУЧШЕНИЯ V2:
-- 5 ретраев с прогрессивной паузой (30с → 45с → 60с → 75с → 90с)
-- Меньше текста за раз (8000 символов) — стабильно влезает в TPM
-- Параметр --retry-failed для повторной попытки проблемных вузов
-- Параметр --manual-fill для гарантированных данных по топ-вузам
-"""
 import argparse
 import time
 from datetime import datetime
@@ -25,8 +10,6 @@ from app.parsers.universal_parser import (
     fetch_page_text, _call_groq_for_json, RateLimitError,
 )
 
-
-# Топ-12 вузов с расширенными URL
 TOP_UNIS = [
     {"name": "Кыргызский Национальный Университет им. Ж. Баласагына",
      "short_name": "КНУ", "city": "Бишкек", "type": "государственный",
@@ -542,7 +525,6 @@ def main():
 
     init_db()
 
-    # ============ РЕЖИМ MANUAL-FILL ============
     if args.manual_fill:
         print("=" * 70)
         print("🛠️  РУЧНАЯ ЗАЛИВКА ДАННЫХ ДЛЯ ТОП-ВУЗОВ")
@@ -586,7 +568,6 @@ def main():
 
         unis = [f["meta"] for f in failed]
     else:
-        # ============ ОБЫЧНЫЙ РЕЖИМ ============
         unis = TOP_UNIS
         if args.only:
             unis = [u for u in unis if args.only.lower() in u["short_name"].lower()]
