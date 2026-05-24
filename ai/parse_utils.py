@@ -1,17 +1,9 @@
-"""Утилиты для управления результатами парсинга.
-
-ИСПОЛЬЗОВАНИЕ:
-    python parse_utils.py status      — показать что в БД
-    python parse_utils.py clean       — удалить вузы без специальностей
-    python parse_utils.py reset       — стереть ВСЁ и начать заново
-"""
 import sys
 from app.database import SessionLocal, init_db
 from app.models.models import University, Specialty, Review, ParseLog
 
 
 def show_status():
-    """Показывает что сейчас в БД."""
     db = SessionLocal()
     try:
         unis = db.query(University).all()
@@ -40,7 +32,6 @@ def show_status():
 
 
 def clean_empty():
-    """Удаляет вузы у которых нет специальностей."""
     db = SessionLocal()
     try:
         empty = [u for u in db.query(University).all() if len(u.specialties) == 0]
