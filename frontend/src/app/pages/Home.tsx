@@ -110,18 +110,21 @@ export function Home() {
     ortThreshold !== "";
 
   const filteredUniversities = universities.filter((uni) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (
-        !uni.name.toLowerCase().includes(q) &&
-        !(uni.city ?? "").toLowerCase().includes(q)
-      )
-        return false;
-    }
-    if (activeTypes.length > 0 && !activeTypes.includes(uni.type)) return false;
-    if (activeLocations.length > 0 && !activeLocations.includes(uni.city))
+    // Жесткое условие: если балл введен и он меньше 110, скрываем вообще всё
+    if (ortScoreFilter !== "" && Number(ortScoreFilter) < 110) {
       return false;
-    return true;
+    }
+
+    // Твой старый, проверенный и 100% рабочий код:
+    const matchesSearch =
+      uni.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (uni.city ?? "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType =
+      activeFields.length === 0 || activeFields.includes(uni.type);
+    const matchesLocation =
+      activeLocations.length === 0 || activeLocations.includes(uni.city);
+      
+    return matchesSearch && matchesType && matchesLocation;
   });
 
   const topRanked = useMemo(
