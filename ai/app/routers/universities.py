@@ -1,4 +1,3 @@
-"""Эндпоинты для вузов, отзывов, аналитики/рекомендаций и AI-обоснования."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -118,7 +117,6 @@ def get_reviews(uni_id: int, db: Session = Depends(get_db)):
 
 @router.get("/recommendations/{user_id}")
 def get_recommendations(user_id: int, top_n: int = 10, db: Session = Depends(get_db)):
-    """Главная фича: топ специальностей с шансом поступления."""
     results = recommend_for_user(db, user_id, top_n=top_n)
     if not results:
         raise HTTPException(400, "Сначала заполни анкету: PUT /users/{user_id}/profile")
@@ -127,11 +125,6 @@ def get_recommendations(user_id: int, top_n: int = 10, db: Session = Depends(get
 
 @router.get("/recommendations/{user_id}/{specialty_id}/argument")
 def argument_recommendation(user_id: int, specialty_id: int, db: Session = Depends(get_db)):
-    """🔥 KILLER FEATURE: AI обосновывает рекомендацию используя ОТЗЫВЫ студентов.
-
-    Возвращает развёрнутое объяснение почему этот вуз подходит,
-    цитируя реальных студентов (или сгенерированные отзывы).
-    """
     profile = db.query(UserProfile).filter_by(user_id=user_id).first()
     if not profile:
         raise HTTPException(400, "Сначала заполни анкету")
