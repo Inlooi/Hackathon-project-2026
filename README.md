@@ -129,7 +129,7 @@ docker compose -f devops/docker-compose.yml up --build
 
 ### 4. Open in browser
 
-- 🌐 **Frontend**: [https://your-frontend.vercel.app](https://your-frontend.vercel.app)
+- 🌐 **Frontend**: [https://your-frontend.vercel.app]((https://abi2kg.vercel.app/))
 - 🤖 **AI API Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - 🔧 **Backend API**: [http://localhost:8001/docs](http://localhost:8001/docs)
 
@@ -246,6 +246,14 @@ parse_logs         (parser status and errors)
 ---
 
 ## 🎤 Live Demo Flow
+
+<img width="2528" height="1374" alt="image" src="https://github.com/user-attachments/assets/5e9830c3-83b1-4269-8cd2-4d092ae8a5a0" />
+
+<img width="2519" height="1384" alt="image" src="https://github.com/user-attachments/assets/b5f38ba5-0f9f-4d7f-b5da-a1b424a40ee6" />
+
+<img width="2514" height="1349" alt="image" src="https://github.com/user-attachments/assets/f29ef5a2-dd25-4ae0-959f-620fe26632b2" />
+
+
 
 Recommended demo scenario (3 minutes):
 
