@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, Loader2, MessageSquare, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -6,27 +7,34 @@ import { tokenStorage } from "../services/authService";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
-type Message = {
-  id: string;
-  role: "bot" | "user";
-  text: string;
-};
+type Message = { id: string; role: "bot" | "user"; text: string };
+
+function welcomeMessage(isAuth: boolean, name?: string): Message {
+  return {
+    id: "welcome",
+    role: "bot",
+    text: isAuth
+      ? `Привет${name ? ", " + name.split(" ")[0] : ""}! Я твой ИИ-консультант. Задай вопрос о вузах, специальностях или поступлении — помогу!`
+      : "Привет! Войди в аккаунт, чтобы я мог учитывать твой профиль при ответах.",
+  };
+}
 
 export function Chatbot() {
   const { user, isAuthenticated } = useAuthContext();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "bot",
-      text: isAuthenticated
-        ? "Привет! Я твой ИИ-консультант. Задай вопрос о вузах, специальностях или поступлении — помогу!"
-        : "Привет! Войди в аккаунт, чтобы я мог учитывать твой профиль при ответах.",
-    },
+    welcomeMessage(isAuthenticated, user?.name),
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Сбрасываем чат при смене пользователя (вход/выход)
+  useEffect(() => {
+    setMessages([welcomeMessage(isAuthenticated, user?.name)]);
+    setInput("");
+    setIsTyping(false);
+  }, [user?.id, isAuthenticated]);
 
   useEffect(() => {
     if (isOpen) endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,14 +44,16 @@ export function Chatbot() {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: "user", text: input };
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      text: input,
+    };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
 
     try {
-      // Если пользователь не авторизован — отправляем без user_id (бэкенд вернёт 404)
-      // Подсказываем войти
       if (!isAuthenticated || !user) {
         setTimeout(() => {
           setMessages((prev) => [
@@ -66,11 +76,16 @@ export function Chatbot() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ user_id: parseInt(user.id), message: userMsg.text }),
+        body: JSON.stringify({
+          user_id: user.id,
+          message: userMsg.text,
+        }),
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: "Ошибка сервера" }));
+        const err = await res
+          .json()
+          .catch(() => ({ detail: "Ошибка сервера" }));
         throw new Error(err.detail ?? "Request failed");
       }
 
@@ -108,9 +123,13 @@ export function Chatbot() {
                   <Bot className="text-white h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white text-sm">Abi2KG Ассистент</h3>
+                  <h3 className="font-semibold text-white text-sm">
+                    Abi2KG Ассистент
+                  </h3>
                   <p className="text-indigo-200 text-xs">
-                    {isAuthenticated ? `Привет, ${user?.full_name?.split(" ")[0]}!` : "Войди для персонализации"}
+                    {isAuthenticated
+                      ? `Привет, ${user?.name?.split(" ")[0]}!`
+                      : "Войди для персонализации"}
                   </p>
                 </div>
               </div>
@@ -125,17 +144,22 @@ export function Chatbot() {
             {/* Messages */}
             <div className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4">
               {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}>
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}
+                >
                   {msg.role === "bot" && (
                     <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 mt-1">
                       <Bot className="h-3 w-3 text-indigo-600" />
                     </div>
                   )}
-                  <div className={`px-3 py-2 rounded-2xl max-w-[80%] text-sm ${
-                    msg.role === "user"
-                      ? "bg-indigo-600 text-white rounded-tr-sm"
-                      : "bg-white text-gray-800 border border-gray-100 rounded-tl-sm shadow-sm"
-                  }`}>
+                  <div
+                    className={`px-3 py-2 rounded-2xl max-w-[80%] text-sm ${
+                      msg.role === "user"
+                        ? "bg-indigo-600 text-white rounded-tr-sm"
+                        : "bg-white text-gray-800 border border-gray-100 rounded-tl-sm shadow-sm"
+                    }`}
+                  >
                     {msg.text}
                   </div>
                 </div>
@@ -154,7 +178,10 @@ export function Chatbot() {
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSend} className="p-3 bg-white border-t border-gray-100">
+            <form
+              onSubmit={handleSend}
+              className="p-3 bg-white border-t border-gray-100"
+            >
               <div className="relative flex items-center">
                 <input
                   type="text"
@@ -176,7 +203,6 @@ export function Chatbot() {
         )}
       </AnimatePresence>
 
-      {/* Toggle Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
