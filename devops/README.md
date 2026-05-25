@@ -83,3 +83,7 @@ Start Docker Desktop. Wait until the whale icon is stable.
                   │  SQLite       │
                   └───────────────┘
 ```
+
+
+### Example:
+<img width="669" height="990" alt="image" src="https://github.com/user-attachments/assets/9a81f05a-b66a-470c-97d1-1cc14d722dfe" />
