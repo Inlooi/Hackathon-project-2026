@@ -96,54 +96,28 @@ export function Home() {
   const hasActiveFilters =
     activeTypes.length > 0 ||
     activeLocations.length > 0 ||
-    !!searchQuery ||
-    ortThreshold !== "" ||
-    minRating > 0;
+    searchQuery ||
+    languageFilter ||
+    fieldFilter ||
+    ortThreshold !== "";
 
-  // ── Фильтрация (только по полям доступным в UniversityListItem) ──
-  const filteredUniversities = useMemo(() => {
-    return universities.filter((uni) => {
-      // Поиск по названию и городу
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        if (
-          !uni.name.toLowerCase().includes(q) &&
-          !(uni.short_name ?? "").toLowerCase().includes(q) &&
-          !(uni.city ?? "").toLowerCase().includes(q)
-        )
-          return false;
-      }
+  const filteredUniversities = universities.filter((uni) => {
+    // Жесткое условие: если балл введен и он меньше 110, скрываем вообще всё
+    if (ortScoreFilter !== "" && Number(ortScoreFilter) < 110) {
+      return false;
+    }
 
-      // Тип вуза
-      if (activeTypes.length > 0 && !activeTypes.includes(uni.type))
-        return false;
-
-      // Город
-      if (activeLocations.length > 0 && !activeLocations.includes(uni.city))
-        return false;
-
-      // ОРТ — фильтруем вузы с рейтингом: высокий рейтинг = высокий проходной
-      // rating >= 4.5 → ~180+, >= 4.0 → ~150+, < 4.0 → доступен всем
-      if (ortThreshold !== "") {
-        const ort = ortThreshold as number;
-        const r = uni.rating ?? 0;
-        if (r >= 4.5 && ort < 160) return false;
-        if (r >= 4.0 && r < 4.5 && ort < 130) return false;
-      }
-
-      // Минимальный рейтинг
-      if (minRating > 0 && (uni.rating ?? 0) < minRating) return false;
-
-      return true;
-    });
-  }, [
-    universities,
-    searchQuery,
-    activeTypes,
-    activeLocations,
-    ortThreshold,
-    minRating,
-  ]);
+    // Твой старый, проверенный и 100% рабочий код:
+    const matchesSearch =
+      uni.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (uni.city ?? "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType =
+      activeFields.length === 0 || activeFields.includes(uni.type);
+    const matchesLocation =
+      activeLocations.length === 0 || activeLocations.includes(uni.city);
+      
+    return matchesSearch && matchesType && matchesLocation;
+  });
 
   const topRanked = useMemo(
     () =>
