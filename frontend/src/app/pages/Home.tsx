@@ -1,4 +1,3 @@
-// US-03: расширенные фильтры  US-09: статистика на главной
 import { useState, useMemo, useEffect } from "react";
 import {
   Search,
@@ -6,13 +5,13 @@ import {
   SlidersHorizontal,
   MapPin,
   GraduationCap,
-  Target,
   Trophy,
   ArrowRight,
   Loader2,
   BookOpen,
   Star,
   Users2,
+  Target,
 } from "lucide-react";
 import {
   universityService,
@@ -23,28 +22,22 @@ import { UniversityCard } from "../components/UniversityCard";
 import { Link } from "react-router";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSaved } from "../contexts/SavedContext";
-import { useAuthContext } from "../contexts/AuthContext";
 
 export function Home() {
   const { t } = useLanguage();
   const { isSaved, toggle } = useSaved();
-  const { user } = useAuthContext();
 
   const [universities, setUniversities] = useState<UniversityListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-
-  // US-09: platform stats
   const [stats, setStats] = useState<PlatformStats | null>(null);
 
-  // US-03: расширенные фильтры
+  // Фильтры
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeLocations, setActiveLocations] = useState<string[]>([]);
-  const [maxBudget, setMaxBudget] = useState<number>(200000);
   const [ortThreshold, setOrtThreshold] = useState<number | "">("");
-  const [languageFilter, setLanguageFilter] = useState<string>("");
-  const [fieldFilter, setFieldFilter] = useState<string>("");
+  const [minRating, setMinRating] = useState<number>(0);
 
   useEffect(() => {
     setLoading(true);
@@ -81,6 +74,7 @@ export function Home() {
     setActiveTypes((p) =>
       p.includes(v) ? p.filter((x) => x !== v) : [...p, v],
     );
+
   const toggleLocation = (v: string) =>
     setActiveLocations((p) =>
       p.includes(v) ? p.filter((x) => x !== v) : [...p, v],
@@ -95,10 +89,8 @@ export function Home() {
     setSearchQuery("");
     setActiveTypes([]);
     setActiveLocations([]);
-    setMaxBudget(200000);
     setOrtThreshold("");
-    setLanguageFilter("");
-    setFieldFilter("");
+    setMinRating(0);
   };
 
   const hasActiveFilters =
@@ -135,9 +127,17 @@ export function Home() {
     [universities],
   );
 
+  const activeCount = [
+    searchQuery ? 1 : 0,
+    activeTypes.length,
+    activeLocations.length,
+    ortThreshold !== "" ? 1 : 0,
+    minRating > 0 ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* ── Hero ── */}
+      {/* Hero */}
       <div className="bg-indigo-900 py-20 px-4 sm:px-6 lg:px-8 text-center">
         <div className="container mx-auto max-w-4xl">
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -166,7 +166,7 @@ export function Home() {
         </div>
       </div>
 
-      {/* ── US-09: Statistics block ── */}
+      {/* Stats */}
       {stats && (
         <div className="bg-white border-b border-gray-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -260,13 +260,18 @@ export function Home() {
         )}
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* ── US-03: Filter sidebar ── */}
+          {/* Sidebar */}
           <div className="w-full lg:w-72 shrink-0">
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm sticky top-4">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2 font-bold text-gray-900">
                   <SlidersHorizontal size={20} className="text-indigo-600" />
                   <h3>{t("filters")}</h3>
+                  {activeCount > 0 && (
+                    <span className="ml-1 text-xs font-bold bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                      {activeCount}
+                    </span>
+                  )}
                 </div>
                 {hasActiveFilters && (
                   <button
@@ -279,16 +284,16 @@ export function Home() {
               </div>
 
               <div className="space-y-7">
-                {/* ORT threshold */}
+                {/* ОРТ */}
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Target size={15} className="text-gray-400" /> Порог ОРТ
+                    <Target size={15} className="text-gray-400" /> Мой балл ОРТ
                   </h4>
                   <input
                     type="number"
                     min="0"
                     max="245"
-                    placeholder="Мой балл ОРТ"
+                    placeholder="например 150"
                     className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     value={ortThreshold}
                     onChange={(e) => {
@@ -299,62 +304,45 @@ export function Home() {
                   />
                   {ortThreshold !== "" && (
                     <p className="mt-1 text-xs text-gray-400">
-                      Показаны вузы с проходным ≤ {ortThreshold}
+                      Скрываем вузы с проходным выше твоего балла
                     </p>
                   )}
                 </div>
 
                 <hr className="border-gray-100" />
 
-                {/* Max budget */}
+                {/* Минимальный рейтинг */}
                 <div>
-                  <h4 className="text-sm font-bold text-gray-900 mb-3">
-                    Макс. бюджет (сом/год)
+                  <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Star size={15} className="text-gray-400" /> Минимальный
+                    рейтинг
                   </h4>
-                  <input
-                    type="range"
-                    min="10000"
-                    max="200000"
-                    step="5000"
-                    value={maxBudget}
-                    onChange={(e) => setMaxBudget(parseInt(e.target.value))}
-                    className="w-full accent-indigo-600"
-                  />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>10 000</span>
-                    <span className="font-semibold text-indigo-600">
-                      {maxBudget.toLocaleString()} сом
-                    </span>
-                    <span>200 000</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {[0, 3, 3.5, 4, 4.5].map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => setMinRating(r)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                          minRating === r
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300"
+                        }`}
+                      >
+                        {r === 0 ? "Любой" : `${r}+`}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 <hr className="border-gray-100" />
 
-                {/* Specialty/field filter */}
-                <div>
-                  <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <BookOpen size={15} className="text-gray-400" />{" "}
-                    Специальность
-                  </h4>
-                  <input
-                    type="text"
-                    placeholder="Поиск по направлению..."
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    value={fieldFilter}
-                    onChange={(e) => setFieldFilter(e.target.value)}
-                  />
-                </div>
-
-                <hr className="border-gray-100" />
-
-                {/* City */}
+                {/* Город */}
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <MapPin size={15} className="text-gray-400" />{" "}
                     {t("locations")}
                   </h4>
-                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-44 overflow-y-auto pr-1">
                     {allLocations.map((loc) => (
                       <label
                         key={loc}
@@ -376,13 +364,13 @@ export function Home() {
 
                 <hr className="border-gray-100" />
 
-                {/* Type */}
+                {/* Тип */}
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <GraduationCap size={15} className="text-gray-400" /> Тип
                     вуза
                   </h4>
-                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-44 overflow-y-auto pr-1">
                     {allTypes.map((type) => (
                       <label
                         key={type}
@@ -418,6 +406,11 @@ export function Home() {
                   </>
                 )}
               </h2>
+              {hasActiveFilters && (
+                <span className="text-xs text-indigo-600 font-medium bg-indigo-50 px-3 py-1 rounded-full">
+                  Фильтры активны
+                </span>
+              )}
             </div>
 
             {loading && (
@@ -461,6 +454,9 @@ export function Home() {
                 <h3 className="mt-6 text-xl font-semibold text-gray-900">
                   {t("noUnis")}
                 </h3>
+                <p className="mt-2 text-gray-400 text-sm">
+                  Попробуй изменить фильтры
+                </p>
                 <button
                   onClick={clearAllFilters}
                   className="mt-8 inline-flex rounded-lg bg-indigo-50 px-6 py-2.5 font-medium text-indigo-700 hover:bg-indigo-100"
