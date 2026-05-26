@@ -1,1 +1,2 @@
-This is backend part
+Backend code is in ai folder
+Код бекенда находится в папке ai
